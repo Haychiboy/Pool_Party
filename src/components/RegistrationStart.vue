@@ -2,15 +2,14 @@
   <div>
     <h2>Sign Up</h2>
     <input type="email" v-model="email" placeholder="Email" required />
-    <button :disabled="!isValidEmail" @click="storeEmailAndProceed">Sign Up</button>
-
-    <button @click="goToLogin">Already have an account? Login</button>
+    <button @click="goToPersonalDetails" :disabled="!isValidEmail">Sign Up</button>
+    
+    <!-- Go to Login button -->
+    <p>Already have an account? <button @click="goToLogin">Login</button></p>
   </div>
 </template>
 
 <script>
-import { mapActions } from 'vuex';
-
 export default {
   data() {
     return {
@@ -24,12 +23,15 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setUserEmail']), // Map the Vuex action to store the email
-    storeEmailAndProceed() {
-      this.setUserEmail(this.email); // Store email in Vuex
-      this.$router.push('/signup/details'); // Navigate to next step
+    goToPersonalDetails() {
+      // Pass the email as a query parameter
+      this.$router.push({
+        path: '/signup/details',
+        query: { email: this.email }
+      });
     },
     goToLogin() {
+      // Navigate to the login page
       this.$router.push('/login');
     }
   }

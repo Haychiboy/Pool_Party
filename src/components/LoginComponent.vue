@@ -32,7 +32,7 @@ export default {
       const auth = getAuth();
       try {
         await signInWithEmailAndPassword(auth, this.email, this.password);
-        this.$router.push('/create-pool'); // Redirect to Create Pool on successful login
+        this.$router.push('/dashboard'); // Redirect to Create Pool on successful login
       } catch (error) {
         this.errorMessage = error.message;
       }

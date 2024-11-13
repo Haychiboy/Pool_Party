@@ -7,6 +7,8 @@ import PersonalDetails from '../components/PersonalDetails.vue';
 import PasswordSetup from '../components/PasswordSetup.vue';
 import CreatePoolComponent from '../components/CreatePoolComponent.vue';
 import store from '../store'; // Ensure the store is imported
+import ProfileComponent from '../components/ProfileComponent.vue';
+import DashboardComponent from '../components/DashboardComponent.vue';
 
 const routes = [
   { path: '/login', component: LoginComponent },
@@ -17,6 +19,12 @@ const routes = [
     path: '/create-pool', 
     component: CreatePoolComponent, 
     meta: { requiresAuth: true } // Route requiring authentication
+  },
+  { path: '/profile', component: ProfileComponent, meta: { requiresAuth: true } },
+  {
+    path: '/dashboard',
+    component: DashboardComponent,
+    meta: { requiresAuth: true }
   }
 ];
 

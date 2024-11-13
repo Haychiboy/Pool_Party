@@ -14,29 +14,34 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
 export default {
   data() {
     return {
       firstName: '',
       lastName: '',
       dob: '',
-      address: ''
+      address: '',
+      email: this.$route.query.email || '' // Retrieve email from query parameters
     };
   },
   computed: {
-    ...mapGetters(['getEmail']), // Map the getter to retrieve the email
-    email() {
-      return this.getEmail;
-    },
     isFormComplete() {
       return this.firstName && this.lastName && this.dob && this.address;
     }
   },
   methods: {
     goToPasswordSetup() {
-      this.$router.push('/signup/password');
+      // Pass all necessary data to the next step as query parameters
+      this.$router.push({
+        path: '/signup/password',
+        query: {
+          email: this.email,
+          firstName: this.firstName,
+          lastName: this.lastName,
+          dob: this.dob,
+          address: this.address
+        }
+      });
     },
     goBack() {
       this.$router.back();

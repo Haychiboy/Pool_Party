@@ -12,40 +12,53 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 export default {
   data() {
     return {
       password: '',
       confirmPassword: '',
-      errorMessage: ''
+      errorMessage: '',
+      email: this.$route.query.email || '',
+      firstName: this.$route.query.firstName || '',
+      lastName: this.$route.query.lastName || '',
+      dob: this.$route.query.dob || '',
+      address: this.$route.query.address || ''
     };
   },
   computed: {
-    ...mapGetters(['getEmail']), // Maps the email getter to this component
-    email() {
-      return this.getEmail; // Accesses email stored in Vuex
-    },
     isPasswordValid() {
       return this.password && this.password === this.confirmPassword;
     }
   },
   methods: {
-  async register() {
-    if (this.isPasswordValid) {
-      try {
-        const auth = getAuth();
-        await createUserWithEmailAndPassword(auth, this.email, this.password);
-        
-        // Redirect to /create-pool after successful registration
-        this.$router.push('/create-pool');
-      } catch (error) {
-        this.errorMessage = error.message;
-      }
-    } else {
-      this.errorMessage = "Passwords do not match.";
+    async register() {
+      if (this.isPasswordValid && this.email) {
+        try {
+          const auth = getAuth();
+          const db = getFirestore();
+          const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
+          const user = userCredential.user;
+
+          // Save user details in Firestore
+          await setDoc(doc(db, 'users', user.uid), {
+            firstName: this.firstName,
+            lastName: this.lastName,
+            dob: this.dob,
+            address: this.address,
+            email: this.email
+          });
+
+          // Navigate to the dashboard after successful registration
+          this.$router.push('/dashboard');
+        } catch (error) {
+          this.errorMessage = error.message;
+          console.error("Error during registration:", error); // Log error for debugging
+        }
+      } else {
+        this.errorMessage = "Please fill out all fields.";
       }
     }
   }
@@ -53,5 +66,5 @@ export default {
 </script>
 
 <style scoped>
-/* Add any necessary styles here */
+/* Optional styling for the component */
 </style>
