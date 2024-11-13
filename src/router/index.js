@@ -1,22 +1,48 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import LoginComponent from '../components/LoginComponent.vue';
 import RegistrationStart from '../components/RegistrationStart.vue';
 import PersonalDetails from '../components/PersonalDetails.vue';
 import PasswordSetup from '../components/PasswordSetup.vue';
 import CreatePoolComponent from '../components/CreatePoolComponent.vue';
+import store from '../store'; // Ensure the store is imported
 
 const routes = [
   { path: '/login', component: LoginComponent },
   { path: '/signup', component: RegistrationStart },
   { path: '/signup/details', component: PersonalDetails },
   { path: '/signup/password', component: PasswordSetup },
-  { path: '/create-pool', component: CreatePoolComponent } // New route for Create Pool
+  { 
+    path: '/create-pool', 
+    component: CreatePoolComponent, 
+    meta: { requiresAuth: true } // Route requiring authentication
+  }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+});
+
+// Route guard to check authentication
+router.beforeEach((to, from, next) => {
+  const auth = getAuth();
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth) {
+    // Wait until Firebase Auth state is confirmed
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        store.commit('setUser', user); // Sync Vuex store with Firebase user
+        next(); // Proceed to the requested route
+      } else {
+        next('/login'); // Redirect to login if not authenticated
+      }
+    });
+  } else {
+    next(); // Proceed to the requested route if no auth required
+  }
 });
 
 export default router;

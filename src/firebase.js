@@ -1,5 +1,6 @@
+// src/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAVtkKDIiguyNHoMIUQzLSguGtanyjLeJ4",
@@ -12,4 +13,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const auth = getAuth(app);
+
+// Set Firebase auth persistence
+setPersistence(auth, browserLocalPersistence);
+
+export { auth };

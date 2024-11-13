@@ -1,20 +1,19 @@
 <template>
   <div>
-    <button @click="goBack">Go Back</button>
-    <h2>Set Up Your Password</h2>
+    <h2>Set Your Password</h2>
+    <p>Email: {{ email }}</p> <!-- Displaying the email if needed -->
     <form @submit.prevent="register">
       <input type="password" v-model="password" placeholder="Password" required />
       <input type="password" v-model="confirmPassword" placeholder="Confirm Password" required />
-      <button type="submit" :disabled="!isPasswordMatching">Register</button>
-      <p v-if="errorMessage">{{ errorMessage }}</p>
+      <button type="submit" :disabled="!isPasswordValid">Register</button>
     </form>
+    <p v-if="errorMessage">{{ errorMessage }}</p>
   </div>
 </template>
 
 <script>
-import { store } from '@/store';
-import { auth } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { mapGetters } from 'vuex';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default {
   data() {
@@ -25,22 +24,34 @@ export default {
     };
   },
   computed: {
-    isPasswordMatching() {
+    ...mapGetters(['getEmail']), // Maps the email getter to this component
+    email() {
+      return this.getEmail; // Accesses email stored in Vuex
+    },
+    isPasswordValid() {
       return this.password && this.password === this.confirmPassword;
     }
   },
   methods: {
-    async register() {
+  async register() {
+    if (this.isPasswordValid) {
       try {
-        await createUserWithEmailAndPassword(auth, store.email, this.password);
+        const auth = getAuth();
+        await createUserWithEmailAndPassword(auth, this.email, this.password);
+        
+        // Redirect to /create-pool after successful registration
         this.$router.push('/create-pool');
       } catch (error) {
         this.errorMessage = error.message;
       }
-    },
-    goBack() {
-      this.$router.back(); // Navigate to the previous page
+    } else {
+      this.errorMessage = "Passwords do not match.";
+      }
     }
   }
 };
 </script>
+
+<style scoped>
+/* Add any necessary styles here */
+</style>

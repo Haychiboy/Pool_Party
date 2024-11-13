@@ -6,11 +6,17 @@
 </template>
 
 <script>
+import { onMounted } from 'vue';
+import { useStore } from 'vuex';
+
 export default {
-  name: 'App'
+  setup() {
+    const store = useStore();
+
+    onMounted(() => {
+      store.dispatch('fetchUser'); // Fetch user on app load
+    });
+  }
 };
 </script>
 
-<style scoped>
-/* Optional: Add any global styles */
-</style>
