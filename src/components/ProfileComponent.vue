@@ -1,39 +1,71 @@
-<!-- src/components/ProfileComponent.vue -->
 <template>
   <div>
-    <h2>User Profile</h2>
-    <p><strong>Email:</strong> {{ email }}</p>
-    <p><strong>Name:</strong> {{ firstName }} {{ lastName }}</p>
+    <button @click="goBack">Back</button>
+    <!-- Profile content here -->
+    <h2>Your Profile</h2>
+    <p>Name: {{ userProfile.name }}</p>
+    <p>Email: {{ userProfile.email }}</p>
   </div>
 </template>
 
 <script>
-import { onMounted, ref } from 'vue';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export default {
-  setup() {
-    const auth = getAuth();
-    const db = getFirestore();
-    const firstName = ref('');
-    const lastName = ref('');
-    const email = ref('');
+  name: 'ProfileComponent',
+  data() {
+    return {
+      userProfile: {
+        name: '',
+        email: '',
+      },
+    };
+  },
+  methods: {
+    goBack() {
+      this.$router.back();
+    },
+    async fetchUserProfile() {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user) {
+          const db = getFirestore();
+          const userDocRef = doc(db, 'users', user.uid); // Assumes 'users' collection with UID-based docs
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            // Combine firstName and lastName
+            this.userProfile.name = `${data.firstName} ${data.lastName}`.trim();
+            this.userProfile.email = data.email;
 
-    onMounted(async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          firstName.value = data.firstName;
-          lastName.value = data.lastName;
-          email.value = data.email;
+            // Check if lastNameLower field exists; if not, add it
+            if (!data.lastNameLower && data.lastName) {
+              await updateDoc(userDocRef, {
+                lastNameLower: data.lastName.toLowerCase(),
+              });
+            }
+          } else {
+            console.error('No such document!');
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
-    });
-
-    return { firstName, lastName, email };
-  }
+    },
+  },
+  mounted() {
+    this.fetchUserProfile(); // Fetch user data when component mounts
+  },
 };
 </script>
+
+<style scoped>
+button {
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+</style>

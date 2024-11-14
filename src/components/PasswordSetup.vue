@@ -42,10 +42,11 @@ export default {
           const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
           const user = userCredential.user;
 
-          // Save user details in Firestore
+          // Save user details in Firestore with lastNameLower
           await setDoc(doc(db, 'users', user.uid), {
             firstName: this.firstName,
             lastName: this.lastName,
+            lastNameLower: this.lastName.toLowerCase(), // Store lowercase version of last name
             dob: this.dob,
             address: this.address,
             email: this.email
