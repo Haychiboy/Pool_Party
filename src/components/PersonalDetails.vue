@@ -74,10 +74,23 @@ export default {
 };
 </script>
 
+<style>
 <style scoped>
-/* Optional styling for the error message */
-.error-message {
-  color: red;
-  font-size: 12px;
+/* Extend the width of the dropdown */
+.pac-container {
+  width: 100% !important; /* Make it match the input width */
+}
+
+/* Adjust the height and display of individual items */
+.pac-item {
+  white-space: normal !important; /* Allow multiline display */
+  font-size: 16px; /* Adjust font size for better readability */
+  padding: 10px; /* Add padding for easier selection */
+}
+
+/* Highlighted item styles */
+.pac-item:hover {
+  background-color: #f0f0f0 !important; /* Change hover background */
 }
 </style>
+

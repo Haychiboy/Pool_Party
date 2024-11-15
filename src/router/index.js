@@ -9,12 +9,18 @@ import CreatePoolComponent from '../components/CreatePoolComponent.vue';
 import store from '../store'; // Ensure the store is imported
 import ProfileComponent from '../components/ProfileComponent.vue';
 import DashboardComponent from '../components/DashboardComponent.vue';
+import ViewPoolComponent from '../components/ViewPoolComponent.vue';
 
 const routes = [
   { path: '/login', component: LoginComponent },
   { path: '/signup', component: RegistrationStart },
   { path: '/signup/details', component: PersonalDetails },
   { path: '/signup/password', component: PasswordSetup },
+  {
+    path: '/view-pool',
+    name: 'ViewPool',
+    component: ViewPoolComponent // Ensure this matches your actual component
+  },
   { 
     path: '/create-pool', 
     component: CreatePoolComponent, 

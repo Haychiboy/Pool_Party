@@ -5,7 +5,15 @@
     <form @submit.prevent="createPool">
       <!-- Pool Name -->
       <label for="poolName">Pool Name:</label>
-      <input type="text" v-model="poolName" id="poolName" placeholder="Enter pool name" />
+      <input 
+        type="text" 
+        v-model="poolName" 
+        id="poolName" 
+        placeholder="Enter pool name" 
+      />
+      <p v-if="!isPoolNameValid && poolNameTouched" class="error-message">
+        Pool name must be at least 3 characters long.
+      </p>
 
       <!-- Pool Amount -->
       <label for="poolAmount">Pool Amount:</label>
@@ -30,18 +38,30 @@
         id="memberSearch"
         placeholder="Enter last name"
       />
-      <button type="button" @click="addMember">Add</button>
+      <button 
+        type="button" 
+        @click="addMember"
+        :disabled="!memberSearch.trim()"
+      >
+        Add
+      </button>
 
       <!-- Selected Members -->
-      <ul>
-        <li v-for="member in selectedMembers" :key="member.id">
-          {{ member.name }}
-          <button @click="removeMember(member.id)">Remove</button>
-        </li>
-      </ul>
+      <div v-if="selectedMembers.length" class="selected-members">
+        <h3>Selected Members:</h3>
+        <div class="member-card" v-for="member in selectedMembers" :key="member.id">
+          <div>
+            <p><strong>Name:</strong> {{ member.name }}</p>
+            <p><strong>Email:</strong> {{ member.email }}</p>
+          </div>
+          <button @click="removeMember(member.id)" class="remove-button">Remove</button>
+        </div>
+      </div>
+      <p v-else>You can create a pool even without adding members.</p>
 
       <!-- Submit Button -->
-      <button type="submit">Create Pool</button>
+      <button type="submit" :disabled="!isPoolNameValid">Create Pool</button>
+      <p v-if="message" class="info-message">{{ message }}</p>
     </form>
   </div>
 </template>
@@ -60,7 +80,14 @@ export default {
       memberOptions: [4, 5], // Default options for 2,000 amount
       memberSearch: '',
       selectedMembers: [], // Stores selected members
+      poolNameTouched: false,
+      message: '', // For user feedback
     };
+  },
+  computed: {
+    isPoolNameValid() {
+      return this.poolName.trim().length >= 3;
+    },
   },
   methods: {
     goBack() {
@@ -71,57 +98,73 @@ export default {
       this.memberOptions = this.poolAmount === '2000' ? [4, 5] : [5, 10];
     },
     async addMember() {
-  const db = getFirestore();
-  const searchTerm = this.memberSearch.toLowerCase(); // Convert search term to lowercase
-  const q = query(collection(db, 'users'), where('lastNameLower', '==', searchTerm)); // Query lowercase last name field
-  const querySnapshot = await getDocs(q);
+      const db = getFirestore();
+      const searchTerm = this.memberSearch.toLowerCase();
+      const q = query(
+        collection(db, 'users'),
+        where('lastNameLower', '==', searchTerm)
+      );
+      const querySnapshot = await getDocs(q);
 
-  if (!querySnapshot.empty) {
-    // If the user exists, add to selectedMembers
-    querySnapshot.forEach((doc) => {
-      const userData = { id: doc.id, ...doc.data() };
-      if (!this.selectedMembers.find((member) => member.id === userData.id)) {
-        this.selectedMembers.push(userData);
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach((doc) => {
+          const userData = { id: doc.id, ...doc.data() };
+
+          // Dynamically construct the name if it doesn't exist
+          userData.name =
+            userData.name ||
+            `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+
+          // Avoid duplicates
+          if (!this.selectedMembers.find((member) => member.id === userData.id)) {
+            this.selectedMembers.push(userData);
+          }
+        });
+        this.memberSearch = ''; // Clear the search field
+        this.message = 'Member added successfully.';
+      } else {
+        this.message = 'User not found.';
       }
-    });
-    this.memberSearch = ''; // Clear the search field
-  } else {
-    alert('User not found.');
-  }
-},
+    },
     removeMember(memberId) {
       // Remove member from selectedMembers by ID
-      this.selectedMembers = this.selectedMembers.filter(member => member.id !== memberId);
+      this.selectedMembers = this.selectedMembers.filter(
+        (member) => member.id !== memberId
+      );
+      this.message = 'Member removed successfully.';
     },
     async createPool() {
-      try {
-        const auth = getAuth();
-        const db = getFirestore();
-        const currentUser = auth.currentUser;
+  try {
+    const auth = getAuth();
+    const db = getFirestore();
+    const currentUser = auth.currentUser;
 
-        // Include the logged-in user in the pool if not already in selectedMembers
-        if (!this.selectedMembers.find((member) => member.id === currentUser.uid)) {
-          this.selectedMembers.push({
-            id: currentUser.uid,
-            name: currentUser.displayName || "Current User"
-          });
-        }
-
-        const newPool = {
-          name: this.poolName,
-          amount: this.poolAmount,
-          members: this.selectedMembers.map(member => member.id), // Store member IDs
-          numMembers: this.numMembers,
-          createdBy: currentUser.uid,
-        };
-
-        await addDoc(collection(db, 'Pools'), newPool);
-        alert("Pool created successfully!");
-        this.$router.push('/dashboard'); // Redirect to dashboard after creation
-      } catch (error) {
-        console.error("Error creating pool:", error);
-      }
+    if (!currentUser) {
+      console.error("User is not authenticated.");
+      this.message = "You must be logged in to create a pool.";
+      return;
     }
+
+    const newPool = {
+      name: this.poolName,
+      amount: this.poolAmount,
+      members: this.selectedMembers.map((member) => member.id),
+      numMembers: this.numMembers,
+      createdBy: currentUser.uid,
+    };
+
+    console.log("New Pool Data:", newPool);
+
+    await addDoc(collection(db, 'pools'), newPool);
+
+    console.log("Pool created successfully!");
+    this.message = "Pool created successfully!";
+    this.$router.push('/dashboard');
+  } catch (error) {
+    console.error("Error in createPool:", error);
+    this.message = "An error occurred while creating the pool.";
+  }
+},
   },
 };
 </script>
@@ -132,5 +175,17 @@ button {
   padding: 8px 12px;
   font-size: 16px;
   cursor: pointer;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.info-message {
+  color: blue;
+  font-size: 14px;
+  margin: 5px 0;
 }
 </style>

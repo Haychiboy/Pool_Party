@@ -3,6 +3,7 @@
     <h2>Welcome to Your Dashboard, {{ displayName }}</h2>
     <button @click="goToCreatePool">Create New Pool</button>
     <button @click="goToProfile">View Profile</button>
+    <button @click="goToViewPool">View Your Pool Party</button>
     <button @click="logout">Log Out</button>
     <!-- Optional: Add more buttons for viewing pools, recent activities, etc. -->
   </div>
@@ -25,6 +26,9 @@ export default {
     },
     goToProfile() {
       this.$router.push('/profile');
+    },
+    goToViewPool() {
+      this.$router.push('/view-pool'); // Navigate to the View Pool page
     },
     logout() {
       const auth = getAuth();
